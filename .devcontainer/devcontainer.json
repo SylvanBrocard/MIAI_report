@@ -4,6 +4,6 @@
 	"extensions": ["james-yu.latex-workshop"],
 	"remoteUser": "vscode",
 	"features": {
-		"git": "latest",
+		"git": "latest"
 	}
 }
