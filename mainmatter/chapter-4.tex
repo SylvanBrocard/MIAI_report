@@ -1,2 +1,74 @@
 \chapter{Results}
 %\label{chapter:title}
+
+\section{A deep dive into the compiler}
+\definecolor{light-green}{rgb}{0.5,1,0.5}
+\definecolor{light-blue}{rgb}{0.5,0.5,1}
+\definecolor{light-red}{rgb}{1,0.5,0.5}
+\definecolor{light-yellow}{rgb}{1,1,0.5}
+\definecolor{light-grey}{gray}{0.5}
+
+\subsection{Comparison}
+\url{https://dpu.dev/#g:!((g:!((g:!((g:!((h:codeEditor,i:(j:1,lang:___c,source:'int+leq(float+a,+float+b)+%7B%0A++++return+a+%3C%3D+b%3B%0A%7D%0A'),l:'5',n:'0',o:'C+source+%231',t:'0')),k:37.5,l:'4',m:50,n:'0',o:'',s:0,t:'0'),(g:!((h:codeEditor,i:(j:2,lang:___c,source:'int+leq(float+aa,+float+bb)+%7B%0A++++int+a+%3D*(int*)%26aa%3B%0A++++int+b+%3D*(int*)%26bb%3B%0A++++if+(a+%3C+0+%26%26+b+%3C+0)%0A++++++++return+b+%3C%3D+a%3B%0A++++else%0A++++++++return+a+%3C%3D+b%3B%0A%7D%0A'),l:'5',n:'0',o:'C+source+%232',t:'0')),header:(),l:'4',m:50,n:'0',o:'',s:0,t:'0')),k:47.25848563968668,l:'3',n:'0',o:'',t:'0'),(g:!((g:!((h:compiler,i:(compiler:clang-2021-3,filters:(b:'0',binary:'1',commentOnly:'0',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'1',trim:'1'),lang:___c,libs:!(),options:'',source:1),l:'5',n:'0',o:'clang+12+for+DPU+(rel+2021.3.0)+(Editor+%231,+Compiler+%231)+C',t:'0')),header:(),k:62.5,l:'4',m:50,n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:clang-2021-3,filters:(b:'0',binary:'1',commentOnly:'0',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'1',trim:'1'),lang:___c,libs:!(),options:'',source:2),l:'5',n:'0',o:'clang+12+for+DPU+(rel+2021.3.0)+(Editor+%232,+Compiler+%232)+C',t:'0')),header:(),l:'4',m:50,n:'0',o:'',s:0,t:'0')),k:52.74151436031331,l:'3',n:'0',o:'',t:'0')),l:'2',m:100,n:'0',o:'',t:'0')),version:4}
+
+\subsection{Operands auto-promotion}
+
+In section \ref{subsubsection:Limitations}, we mentioned the limitations of the compiler when it comes to optimizing for our target architecture. We're now going to expose one such occurrence and how to deal with it.
+
+\begin{sloppypar}
+\url{https://dpu.dev/#z:OYLghAFBqd5TKALEBjA9gEwKYFFMCWALugE4A0BIEAViAIzkA2AhgHagD63q5AzugCupVNhAByAKQAmAMwE2qJoJwBqSbIDCfIoTZEAdEg25JABgCC5iwqIA2ACyciq7IKUFMEW/TvOAVKos5Ko%2BfkSBAEYhgray0s6qfAQAXtgAlOoA7ABC1qoFofqOiSyoqIIAtoKsRNgaeZaFqgBmZBCx%2BvGJBBoAImYNoRraqfWyOcPSedOZkrn5zYVhiYQtLeqyfUGSAKw5vbvbALSqkXsHe30Ni0tB5VU1LHXq0/2qaxuBnzdNhfPXP4FUjYIjCNj3CrVWrjRpWLKAizidLMCS7cTkNgSMwY9ASTRJIQibCvWT0DFEbHIlEAaxAuzMqPEDgxlXpjKx4hx5Dx4gxfBAjMpXOR5DgsBQGBw%2BGIZEo1Do0mY7C4PH4RNEEhk8kUyjUIx0ekMxlkpks1lsJRcbg8XhWESCIXtURicQSLmSaTmCyBRXsThcZShTzqvwszTapA6bp6/UGE2GWk9sKmMxy3rhdwKADd0LUCEwSfaPgR1pttiwLocTmcq1cw1nIY8Ya88lsS2XvqWWg3/gjbqoQWDSBCg83nrDrADrKKmGiMZzubyCQJhKJSdIKVT0iikNgWDhSNQUXPmaz2ZiqTyJPzBeRhTid%2BQ6QymbIF1feVuRSjxQh4BAkroJUAAOBbYBQVAQBgoHgUeSgqsc0hmMhxyyOQLQFnUpAChAkRXpECgsKQACeEjkuQMGVNg%2BgAPJsEwZEiuQOCVCqhZXoQIKoEQBDZtgArMdgAAe2AVHU5EYrY2CntyTAEJEpDESRmhYGI4gUUQpAEGyGmziqIDcJwvDyZEAqQCi6Agbx6BsIJ/IamI9AnvOl7MbyCEcKo9BmK0ZCqH0AAKACqqgQCCTCqMhyEGLIBhmJkEAyiQpCkowqiqbBhapdqzkZd%2Bj60hep4suQbKvouuI3vwd4PqKf6AWgwFgdl8rQc1cFoKwHBIShZhoRhWEQbh%2BHMYRbDKZJlHAdRdEMUx3Ksex6mLQQ3G8fxgnciJYmCBJemUPoMlXqZSmkapOBTVpOmSSeBlGSZCnmRAlnWQQtn2eqa5iNILniOiblLhInnAN5vmRgFIVhRFUV9bF8WJcl/nakqGUddlG6ZJoBXUuQe4HhBx5MqV5Ucp%2B1UCkK25Fa%2Bp7voDVV8ve1NMpuDPXkzdVPvxOHvViDhAA}
+\end{sloppypar}
+
+The code:
+\lstset{
+   showlines=true
+}
+\begin{lstlisting}[language=C]
+#include <stdint.h>
+
+\end{lstlisting}
+\vspace{-\baselineskip}
+\begin{lstlisting}[language=C, backgroundcolor=\color{light-green}]
+int64_t euclid(int16_t* a, int16_t* b, uint32_t size) {
+    int64_t accumulate;
+    for(uint32_t i=0; i<size; i++) {
+        int16_t diff = a[i] - b[i];
+        accumulate += diff * diff;
+    }
+    return accumulate;
+}
+\end{lstlisting}
+
+The compiled:
+\begin{lstlisting}[language={[x86masm]Assembler}]
+    euclid:                                 // @euclid
+    sd r22, 24, d22
+    add r22, r22, 32
+    sd r22, -16, d14
+    sd r22, -24, d16
+    sd r22, -32, d18
+    move r14, r2
+    move r15, r1
+    move r16, r0
+    jeq r14, 0, .LBB0_2
+.LBB0_1:                                // =>This Inner Loop Header: Depth=1
+    lhs r0, r16, 0
+    lhs r1, r15, 0
+    sub r0, r0, r1
+    extsh r0, r0
+    move r1, r0
+    call r23, __mulsi3
+    move.u d0, r0
+    add r19, r19, r1
+    addc r18, r18, r0
+    add r15, r15, 2
+    add r16, r16, 2
+    add r14, r14, -1, nz, .LBB0_1
+.LBB0_2:
+    movd d0, d18
+    ld d18, r22, -32
+    ld d16, r22, -24
+    ld d14, r22, -16
+    ld d22, r22, -8
+    jump r23
+\end{lstlisting}
