@@ -12,3 +12,8 @@ This template works with _pdfLaTeX_, _XeLaTeX_ and _LuaLaTeX_. In order to adher
 
 This work is based of Daan Zwaneveld's TU Delft - Unofficial Report/Thesis Template
 This template is available under CC BY-NC 4.0. For more information, see https://creativecommons.org/licenses/by-nc/4.0/. No attribution is required in reports/theses created using this template.
+
+
+## About the dev container
+
+I couldn't find a way to accept the ttf-mscorefonts-installer EULA automatically for now. If you want to use Microsoft fonts (as is the case in this template), you will need to run `sudo apt updat && sudo apt install --no-install-recommends -y ttf-mscorefonts-installer fontconfig` from the command line and accept the EULA manually.

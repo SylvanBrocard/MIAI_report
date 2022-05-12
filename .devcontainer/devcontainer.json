@@ -1,5 +1,9 @@
 {
 	"name": "TeX Live base",
 	"dockerFile": "Dockerfile",
-	"extensions": ["james-yu.latex-workshop"]
+	"extensions": ["james-yu.latex-workshop"],
+	"remoteUser": "vscode",
+	"features": {
+		"git": "latest",
+	}
 }
