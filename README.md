@@ -17,4 +17,4 @@ This template is available under CC BY-NC 4.0. For more information, see https:/
 
 # About the dev container
 
-I couldn't find a way to accept the ttf-mscorefonts-installer EULA automatically for now. If you want to use Microsoft fonts (as is the case in this template), you will need to run `sudo apt update && sudo apt install --no-install-recommends -y ttf-mscorefonts-installer fontconfig` inside the container and accept the EULA manually.
+I couldn't find a way to accept the ttf-mscorefonts-installer EULA automatically for now. If you want to use Microsoft fonts (as is the case in this template), you will need to run `sudo apt update && sudo apt install --no-install-recommends -y ttf-mscorefonts-installer fontconfig && fc-cache -fv` inside the container and accept the EULA manually.
