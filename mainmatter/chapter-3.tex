@@ -49,20 +49,98 @@ Here we will present the machine learning algorithms that we chose to implement 
 
 \subsection{K-Means}
 
-K-means~\cite{Lloyd82leastsquares} is a popular clustering algorithm, due to its simplicity and efficiency. It is used to identify unlabeled groups in a dataset, by grouping them in clusters around a so-called centroid. The algorithm is divided into an E (for Evaluation) phase, where the points in the dataset are assigned to the closest centroid, and an M (for Move) phase, where the centroids are recalculated as the average of the points in their cluster.
+\begin{wrapfigure}{L}{0.45\textwidth}
+    \centering
+    \resizebox{0.3\textwidth}{!}{
+        \begin{tikzpicture}[node distance=2cm]
+            \begin{scope}
+                \node (kcpupro1c) [processcpu] {For each point find the nearest centroid};
+                \node (kcpupro2c) [processcpu, below=\vspacing of kcpupro1c] {Sum the features of all points in each cluster};
+                \node (kcpupro3c) [processcpu, below=\vspacing of kcpupro2c] {Average the new centroids of clusters};
+                \node (kcpudec1) [decision, below=\vspacing of kcpupro3c] {Centroids changed?};
+                \node (kcpuout1) [stop, below=\vspacing of kcpudec1] {Output centroids};
+
+                \draw [arrow] (kcpupro1c) -- (kcpupro2c);
+                \draw [arrow] (kcpupro2c) -- (kcpupro3c);
+                \draw [arrow] (kcpupro3c) -- (kcpudec1);
+                \draw [arrow] (kcpudec1) -- node[anchor=east] {no} (kcpuout1);
+                \draw [arrow] (kcpudec1.east) -- node[anchor=south] {yes} ++(2,0) |- (kcpupro1c.east);
+            \end{scope}
+        \end{tikzpicture}
+    }
+    \caption{\label{fig:KMeansCPU}The K-Means algorithm on CPU}
+\end{wrapfigure}
+
+K-means~\cite{Lloyd82leastsquares} is a popular clustering algorithm, due to its simplicity and efficiency. It is used to identify unlabeled groups in a dataset, by grouping them in clusters around a so-called centroid. The algorithm is divided into an E (for Evaluation) phase, where the points in the dataset are assigned to the closest centroid, and an M (for Move) phase, where the centroids are recalculated as the average of the points in their cluster. A simplified flowchart of the algorithm can be seen in Figure \ref{fig:KMeansCPU}.
 
 This natural division of the K-Means suits the UPMEM architecture, as the E step can be entirely performed in memory, and the M step can be performed when the CPU and DPUs synchronize.
 
 It should be noted that there exists several variants of the K-Means algorithm, such as the Elkan variant~\cite{elkan2003using} which uses the triangle inequality to reduce the amount of distances calculations that have to be performed. For our implementation and for comparisons, we stuck with the original Lloyd variant. There are two reasons for that:
 \begin{itemize}
     \item It is the simplest to implement.
-    \item When it comes to the Scikit-learn implementation, it turns out in most benchmarks that the Elkan variant is slower. This boils down to implementation. The core of the Lloyd algorithm is essentially a large matrix multiplication. The Scikit-learn implementation takes full advantage of that fact by making a direct call to the Intel MKL~\cite{mkl} to perform that multiplication. Being developed by Intel, the MKL uses the vectorization capabilities built in x86 processors to speed up the computation. By contrast, the Elkan variant is implemented with naive loops, and puts the onus of optimization on the compiler, which cannot reach the same performances.
+    \item When it comes to the Scikit-learn implementation, it turns out in most benchmarks that the Elkan variant is slower. This boils down to implementation. The core of the Lloyd algorithm is essentially a large matrix multiplication. The Scikit-learn implementation takes full advantage of that fact by making a direct call to the Intel MKL~\cite{mkl} to perform that multiplication. Being developed by Intel, the MKL uses the vectorization capabilities built in x86 processors to speed up the computation. By contrast, the Elkan variant is implemented with naive loops, and puts the onus of optimization on the compiler, which cannot reach the same performances. It should be noted that Intel also only implemented the Lloyd algorithm in their own Data Analytics Library.
 \end{itemize}
 Since we are trying to compare hardware capabilities, it is better to stick to the Lloyd variant.
 
-A point should be made about the norm used to compute distances. Since performing multiplications on DPUs is slow, it could be tempting to use the L1 norm instead of the Euclidean L2 norm. However, a naive approach consisting of simply replacing the L2 distances with L1 distances in K-Means would not converge in the general case~\cite{bradley1996clustering}. The reason is that K-Means is a variance-minimizing algorithm, and the mean is the minimizer of the variance. The minimizer of the L1-variance is the median. Thus, if we wanted to avoid multiplications altogether, we should implement the K-Medians~\cite{jain1988algorithms} algorithm. While it is possible in principle, it would require using a median-of-median approach~\cite{blum1973time}, 
+A point should be made about the norm used to compute distances. Since performing multiplications on DPUs is slow, it could be tempting to use the L1 norm instead of the Euclidean L2 norm. However, a naive approach consisting of simply replacing the L2 distances with L1 distances in K-Means would not converge in the general case~\cite{bradley1996clustering}. The reason is that K-Means is a variance-minimizing algorithm, and the mean is the minimizer of the variance. The minimizer of the L1-variance is the median. Thus, if we wanted to avoid multiplications altogether, we should implement the K-Medians~\cite{jain1988algorithms} algorithm. While it is possible in principle, it would require using a median-of-median approach~\cite{blum1973time}, and implementing it on PIM while limiting CPU-DPU communication would be much more challenging.
 
 \subsection{Decision Trees}
 
+\begin{wrapfigure}{R}{0.4\textwidth}
+    \centering
+    \resizebox{0.3\textwidth}{!}{
+        \begin{tikzpicture}[node distance=2cm]
+            \begin{scope}
+                \node (pro1c) [io] {Load an active leaf};
+                \node (pro2c) [processcpu, below=\vspacing of pro1c] {Evaluate splits};
+                \node (pro3c) [processcpu, below=\vspacing of pro2c] {Commit best split};
+                \node (pro52c) [processcpu, below=\vspacing of pro3c] {create new leaves};
+                \node (pro6c) [decision, below=\vspacing of pro52c] {Tree finished?};
+                \node (out1) [stop, below=\vspacing of pro6c] {Output Tree};
+
+                \draw [arrow] (pro1c) -- (pro2c);
+                \draw [arrow] (pro2c) -- (pro3c);
+                \draw [arrow] (pro3c) -- (pro52c);
+                \draw [arrow] (pro52c) -- (pro6c);
+                \draw [arrow] (pro6c) -- node[anchor=east] {yes} (out1);
+                \draw [arrow] (pro6c.east) -- node[anchor=south] {no} ++(2,0) |- (pro1c.east);
+            \end{scope}
+        \end{tikzpicture}
+    }
+    \caption{\label{fig:TreeCPU}A tree algorithm on CPU}
+\end{wrapfigure}
+
+
+Decision trees~\cite{suthaharan2016decision} are tree-based algorithms used for classification and regression, commonly known as CART (for Classification And Regression Trees). They successively partition the dataset based on thresholds. A simplified representation of a tree-building algorithm can be seen in Figure \ref{fig:TreeCPU}. Trees are a good candidate for PIM because the amount of calculations is limited, and most of the workload is about memory reads and writes.
+
+In this work, we only implemented classification trees, as this allows us to avoid any sort of floating-point operations on the DPUs, other than comparisons. Furthermore, we only implemented the so-called \emph{extremely randomized tree}~\cite{geurts2006extremely}, referred to as \emph{extra-tree} in Scikit-learn. Unlike the regular trees, this variant of the algorithm only selects thresholds at random, and does not use any heuristic to select the best threshold. This allows us to make the CPU "forget" about the dataset once it has been loaded into the DIMMs. Extremely randomized tree present a larger bias and lower variance than regular trees, and are commonly used as the base unit for forests of randomized trees~\cite{breiman2001random}.
+
 \section{Collaboration}
 
+Once the potential of machine learning algorithms in PIM started to become apparent, we decided to start a collaboration with Juan Gómez Luna of ETH Zürich and his student Yuxin Guo.
+
+Dr. Gómez Luna provided us with the academic insights on what the scope of a publication on machine learning in-memory should be. He also wrote the bulk of our joint article. Meanwhile, Yuxin Guo implemented the Linear Regression and Logistic Regression algorithms in UPMEM PIM. I won't expand on the result of his work in his report, but they can be found in the soon-to-be-published article.
+
+\section{Work Organization}
+
+Internally, the software team has two weekly stand-ups on Monday and Wednesday, and one software point on Friday. The stand-ups are meant to update the rest of the team on the current advancement of projects, and the point is to discuss the projects at more length.
+There is also a company-wide stand-up on Tuesday, where department heads update everyone on their advancement.
+This project also had weekly synchronization meetings with the ETH Zürich team, where we discussed necessary additions to the article.
+
+\section{Deliverables}
+
+\subsection{Python Libraries}
+
+My first task at my arrival at UPMEM was to work on an existing C code for K-Means that had been provided by an academic partner, and suffered from extremely poor optimization (about 1000 times slower than a CPU code). As part of my work on the code, I decided to reimplement it as a Python library. The main motivation here being that if we want to garner interest among data scientists for UPMEM PIM, there should be a Python API. The library is available on UPMEM GitHub repository. It uses C code for the backend, and Pybind-11 for the Python bindings.
+
+Decision trees are also available as a Python library. In an effort of fairness, most of the backend code is written in Cython, to mimic the Scikit-learn implementation.
+
+For now the two libraries are separate, but they will be merged, along with Linear Regression and Logistic Regression, in a yet-to-be-named PIM ML library.
+
+\subsection{Benchmarks}
+
+With the co-publication in mind, a lot of effort was put into benchmarking the algorithms. This required implementing various performance counter, as well as modifying parts of Scikit-learn to add those same performance counters. We decided not to use native Python profiling tools for this task, because they have a significant overhead and shouldn't be used for benchmarking, as stated in the Python documentation~\cite{10.5555/1593511}.
+
+\subsection{Compiler Simulation}
+
+Apart from generating interest, the applications team role is also to inform the hardware team about which improvements to the future versions of the DPUs would result in the best performance gains. In this optic, I tested different versions of the K-Means on the DPU software simulator, with simulated assembly instructions, and compared the resulting instructions counts.

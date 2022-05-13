@@ -1,74 +1,60 @@
 \chapter{Results}
 %\label{chapter:title}
 
-\section{A deep dive into the compiler}
-\definecolor{light-green}{rgb}{0.5,1,0.5}
-\definecolor{light-blue}{rgb}{0.5,0.5,1}
-\definecolor{light-red}{rgb}{1,0.5,0.5}
-\definecolor{light-yellow}{rgb}{1,1,0.5}
-\definecolor{light-grey}{gray}{0.5}
+\section{K-Means}
 
-\subsection{Comparison}
-\url{https://dpu.dev/#g:!((g:!((g:!((g:!((h:codeEditor,i:(j:1,lang:___c,source:'int+leq(float+a,+float+b)+%7B%0A++++return+a+%3C%3D+b%3B%0A%7D%0A'),l:'5',n:'0',o:'C+source+%231',t:'0')),k:37.5,l:'4',m:50,n:'0',o:'',s:0,t:'0'),(g:!((h:codeEditor,i:(j:2,lang:___c,source:'int+leq(float+aa,+float+bb)+%7B%0A++++int+a+%3D*(int*)%26aa%3B%0A++++int+b+%3D*(int*)%26bb%3B%0A++++if+(a+%3C+0+%26%26+b+%3C+0)%0A++++++++return+b+%3C%3D+a%3B%0A++++else%0A++++++++return+a+%3C%3D+b%3B%0A%7D%0A'),l:'5',n:'0',o:'C+source+%232',t:'0')),header:(),l:'4',m:50,n:'0',o:'',s:0,t:'0')),k:47.25848563968668,l:'3',n:'0',o:'',t:'0'),(g:!((g:!((h:compiler,i:(compiler:clang-2021-3,filters:(b:'0',binary:'1',commentOnly:'0',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'1',trim:'1'),lang:___c,libs:!(),options:'',source:1),l:'5',n:'0',o:'clang+12+for+DPU+(rel+2021.3.0)+(Editor+%231,+Compiler+%231)+C',t:'0')),header:(),k:62.5,l:'4',m:50,n:'0',o:'',s:0,t:'0'),(g:!((h:compiler,i:(compiler:clang-2021-3,filters:(b:'0',binary:'1',commentOnly:'0',demangle:'0',directives:'0',execute:'1',intel:'0',libraryCode:'1',trim:'1'),lang:___c,libs:!(),options:'',source:2),l:'5',n:'0',o:'clang+12+for+DPU+(rel+2021.3.0)+(Editor+%232,+Compiler+%232)+C',t:'0')),header:(),l:'4',m:50,n:'0',o:'',s:0,t:'0')),k:52.74151436031331,l:'3',n:'0',o:'',t:'0')),l:'2',m:100,n:'0',o:'',t:'0')),version:4}
+\subsection{Implementation}
 
-\subsection{Operands auto-promotion}
+\begin{wrapfigure}[25]{L}{0.4\textwidth}
+    \centering
+    \resizebox{0.3\textwidth}{!}{
+        \begin{tikzpicture}[node distance=2cm]
+            \node (in1) [io] {Load points to DPU memory};
+            \node (pro1c) [io, below=\vspacing of in1] {Broadcast centroids to all DPUs};
+            \node (pro1) [processdpu, below=\vspacing of pro1c] {Initialize cluster sums and cluster counters to 0};
+            \node (pro2) [processdpu, below=\vspacing of pro1] {For each point find the nearest centroid};
+            \node (pro3) [processdpu, below=\vspacing of pro2] {For each point add features to the appropriate cluster sum and increment the cluster counter};
+            \node (pro2c) [processcpu, below=\vspacing of pro3] {Recover and sum the cluster sums and counters from all DPUs};
+            \node (pro3c) [processcpu, below=\vspacing of pro2c] {Average the new centroids of clusters};
+            \node (dec1) [decision, below=\vspacing of pro3c] {Centroids changed?};
+            \node (out1) [stop, below=\vspacing of dec1] {Output centroids};
 
-In section \ref{subsection:Limitations}, we mentioned the limitations of the compiler when it comes to optimizing for our target architecture. We're now going to expose one such occurrence and how to deal with it.
+            \draw [arrow] (in1) -- (pro1c);
+            \draw [arrow] (pro1c) -- (pro1);
+            \draw [arrow] (pro1) -- (pro2);
+            \draw [arrow] (pro2) -- (pro3);
+            \draw [arrow] (pro3) -- (pro2c);
+            \draw [arrow] (pro2c) -- (pro3c);
+            \draw [arrow] (pro3c) -- (dec1);
+            \draw [arrow] (dec1) -- node[anchor=east] {no} (out1);
+            \draw [arrow] (dec1.east) -- node[anchor=south] {yes} ++(3,0) |- (pro1c.east);
 
-\begin{sloppypar}
-\url{https://dpu.dev/#z:OYLghAFBqd5TKALEBjA9gEwKYFFMCWALugE4A0BIEAViAIzkA2AhgHagD63q5AzugCupVNhAByAKQAmAMwE2qJoJwBqSbIDCfIoTZEAdEg25JABgCC5iwqIA2ACyciq7IKUFMEW/TvOAVKos5Ko%2BfkSBAEYhgray0s6qfAQAXtgAlOoA7ABC1qoFofqOiSyoqIIAtoKsRNgaeZaFqgBmZBCx%2BvGJBBoAImYNoRraqfWyOcPSedOZkrn5zYVhiYQtLeqyfUGSAKw5vbvbALSqkXsHe30Ni0tB5VU1LHXq0/2qaxuBnzdNhfPXP4FUjYIjCNj3CrVWrjRpWLKAizidLMCS7cTkNgSMwY9ASTRJIQibCvWT0DFEbHIlEAaxAuzMqPEDgxlXpjKx4hx5Dx4gxfBAjMpXOR5DgsBQGBw%2BGIZEo1Do0mY7C4PH4RNEEhk8kUyjUIx0ekMxlkpks1lsJRcbg8XhWESCIXtURicQSLmSaTmCyBRXsThcZShTzqvwszTapA6bp6/UGE2GWk9sKmMxy3rhdwKADd0LUCEwSfaPgR1pttiwLocTmcq1cw1nIY8Ya88lsS2XvqWWg3/gjbqoQWDSBCg83nrDrADrKKmGiMZzubyCQJhKJSdIKVT0iikNgWDhSNQUXPmaz2ZiqTyJPzBeRhTid%2BQ6QymbIF1feVuRSjxQh4BAkroJUAAOBbYBQVAQBgoHgUeSgqsc0hmMhxyyOQLQFnUpAChAkRXpECgsKQACeEjkuQMGVNg%2BgAPJsEwZEiuQOCVCqhZXoQIKoEQBDZtgArMdgAAe2AVHU5EYrY2CntyTAEJEpDESRmhYGI4gUUQpAEGyGmziqIDcJwvDyZEAqQCi6Agbx6BsIJ/IamI9AnvOl7MbyCEcKo9BmK0ZCqH0AAKACqqgQCCTCqMhyEGLIBhmJkEAyiQpCkowqiqbBhapdqzkZd%2Bj60hep4suQbKvouuI3vwd4PqKf6AWgwFgdl8rQc1cFoKwHBIShZhoRhWEQbh%2BHMYRbDKZJlHAdRdEMUx3Ksex6mLQQ3G8fxgnciJYmCBJemUPoMlXqZSmkapOBTVpOmSSeBlGSZCnmRAlnWQQtn2eqa5iNILniOiblLhInnAN5vmRgFIVhRFUV9bF8WJcl/nakqGUddlG6ZJoBXUuQe4HhBx5MqV5Ucp%2B1UCkK25Fa%2Bp7voDVV8ve1NMpuDPXkzdVPvxOHvViDhAA}
-\end{sloppypar}
+            \background{pro1}{pro1}{pro3}{pro3}{I}
+        \end{tikzpicture}
+    }
+    \caption{\label{fig:KMeansDPU}The K-Means algorithm on DPU}
+\end{wrapfigure}
 
-The code:
-\lstset{
-   showlines=true
-}
+The main workload in K-Means is to measure pairwise distances between each point-centroid pair. Obviously this would be way too slow in floating point arithmetic with DPUs. My approach is instead to do a linear quantization of the data on 15 bits. That is to say the features are mapped linearly to the range [-16385,16384] and encoded as 16-bit integers. The extra bit of leeway is there so that we don't overflow when subtracting features. The entire algorithm is then run in this format, and only at the end the quantized data is converted back to floating point.
+
+This brings two questions. The first one is why choose 16 bits and not 8, since the hardware supports only 8-bit multiplications? Wouldn't that mean that we would end up being 4 times slower than in 8 bits, since performing a 16 bits multiplication with 8 bits hardware needs 4 multiplications? To understand this choice, remember that the DPUs are RISC processors. This means that for each cycle they only execute a very simple instruction. For example, a multiplication needs two load instructions (one for each operand), one multiplication instruction, and one store instruction.
+
+Consider the following simple function to compute the squared euclidean distance between two vectors:
 \begin{lstlisting}[language=C]
 #include <stdint.h>
 
-\end{lstlisting}
-\vspace{-\baselineskip}
-\begin{lstlisting}[language=C, backgroundcolor=\color{light-green}]
 int64_t euclid(int16_t* a, int16_t* b, uint32_t size) {
     int64_t accumulate;
     for(uint32_t i=0; i<size; i++) {
-        int16_t diff = a[i] - b[i];
+        volatile int16_t diff = a[i] - b[i];
         accumulate += diff * diff;
     }
     return accumulate;
-}
+}    
 \end{lstlisting}
 
-The compiled:
-\begin{lstlisting}[language={[x86masm]Assembler}]
-    euclid:                                 // @euclid
-    sd r22, 24, d22
-    add r22, r22, 32
-    sd r22, -16, d14
-    sd r22, -24, d16
-    sd r22, -32, d18
-    move r14, r2
-    move r15, r1
-    move r16, r0
-    jeq r14, 0, .LBB0_2
-.LBB0_1:                                // =>This Inner Loop Header: Depth=1
-    lhs r0, r16, 0
-    lhs r1, r15, 0
-    sub r0, r0, r1
-    extsh r0, r0
-    move r1, r0
-    call r23, __mulsi3
-    move.u d0, r0
-    add r19, r19, r1
-    addc r18, r18, r0
-    add r15, r15, 2
-    add r16, r16, 2
-    add r14, r14, -1, nz, .LBB0_1
-.LBB0_2:
-    movd d0, d18
-    ld d18, r22, -32
-    ld d16, r22, -24
-    ld d14, r22, -16
-    ld d22, r22, -8
-    jump r23
-\end{lstlisting}
+Once compiled for DPUs, this function ends up being 26 instructions long. Only 12 instructions are spent on the actual multiplication, and the rest is spent on the subtraction, the loop and the return. If we replace the inputs and the difference with 8-bits integers, the function is now 17 instructions long. All in all, that's only a 60\% performance degradation for more than double the numerical precision, which is quite the trade-off.
+
+The other question is can we trust the algorithm once we've quantized the data? Surely, it is possible to construct a counter-example where the quantization would lead to an incorrect result. However, and allow me to emphasize this, \textbf{floating point K-Means has similar issues, especially in 32 bits}~\cite{jezequel:hal-02486753}. Working in floating point isn't a guarantee against rounding errors, quite the opposite. Working with integers, we can at least be sure that small values don't get rounded to zero when we perform long addition loops.
+
+The important question isn't theoretical, but empirical: does the algorithm generally work on real datasets? We will see that it does.

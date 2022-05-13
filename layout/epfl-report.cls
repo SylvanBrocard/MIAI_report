@@ -48,7 +48,8 @@
 \RequirePackage{iftex}      % Adds if-else statements to support multiple compilers
 \RequirePackage{datetime}   % Change format of \today
 
-\usepackage{xurl}
+\RequirePackage{xurl}
+\RequirePackage{wrapfig}
 
 %% Defining commands for the cover image, subtitle, subject, affiliation and table of authors
 \newcommand*\subtitle[1]{\def\@subtitle{#1}}
