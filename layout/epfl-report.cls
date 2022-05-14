@@ -50,6 +50,7 @@
 
 \RequirePackage{xurl}
 \RequirePackage{wrapfig}
+\RequirePackage{epigraph}
 
 %% Defining commands for the cover image, subtitle, subject, affiliation and table of authors
 \newcommand*\subtitle[1]{\def\@subtitle{#1}}

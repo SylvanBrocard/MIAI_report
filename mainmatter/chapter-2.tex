@@ -3,7 +3,7 @@
 
 \section{The company}
 
-UPMEM is a fabless semiconductor company. It was founded in 2015 by electronics engineers Gilles Hamou and Fabrice Devaux.
+UPMEM is a fabless\footnote{Meaning it designs microchips but contracts out their production.} semiconductor company. It was founded in 2015 by electronics engineers Gilles Hamou and Fabrice Devaux.
 
 At the time of this writing it counts nineteen employees, mostly located at the Grenoble office. There is a secondary office at Station F in Paris, and a couple of employees work remotely.
 
@@ -37,27 +37,27 @@ There are five members in the Application and SDK team: the tech lead, two softw
 \begin{itemize}
     \item \textbf{OS:} All software employees work in a Linux environment (Ubuntu Budgie in my case).
     \item \textbf{Machines:} There are several PIM-enabled cloud servers reserved for development and internal R\&D, accessible via a SSH connection. There are also regular servers for development and CI accessible only through the company LAN. Server access and security is provided by JumpCloud services. All servers and cloud machines run on Debian.
-    \item \textbf{Sources:} The UPMEM toolchain source code is hosted on private GitHub repositories. It is tested nightly on a local server with Jenkins. The applications codes are also hosted on the company GitHub account, with visibility settings depending on the project confidentiality.
+    \item \textbf{Sources:} The UPMEM toolchain\footnote{The set of programming tools to develop for UPMEM PIM.} source code is hosted on private GitHub repositories. It is tested nightly on a local server with Jenkins. The applications codes are also hosted on the company GitHub account, with visibility settings depending on the project confidentiality.
     \item \textbf{Cloud:} When the need arises for extra computing power or for GPU calculations, the company subscription to AWS allows me to use EC2 instances. For long-term storage, the company uses a Google Drive.
     \item \textbf{Project tracking:} The company uses Jira for project tracking, although this is a recent addition, and most workflows are not yet integrated.
 \end{itemize}
 
-This template aims to simplify and improve the (Xe)LaTeX report template by EPFL. Some of the main features:
+% This template aims to simplify and improve the (Xe)LaTeX report template by EPFL. Some of the main features:
 
-\begin{itemize}
-  \item \textbf{Simplicity First:} A class file that has been reduced by nearly 70\% to simplify customization;
-  \item \textbf{Effortless:} Many common packages are included to get started immediately;
-  \item \textbf{Complete:} Ready-to-go when it comes to document and file structure.
-\end{itemize}
+% \begin{itemize}
+%   \item \textbf{Simplicity First:} A class file that has been reduced by nearly 70\% to simplify customization;
+%   \item \textbf{Effortless:} Many common packages are included to get started immediately;
+%   \item \textbf{Complete:} Ready-to-go when it comes to document and file structure.
+% \end{itemize}
 
-\noindent This template works with pdfLaTeX, XeLaTeX and LuaLaTeX. In order to adhere to the EPFL house style, either XeLaTeX or LuaLaTeX is required, as it supports TrueType and OpenType fonts. BibLaTeX is used for the bibliography with as backend biber. Please visit \url{https://batuhanfaik.github.io/report} for the full documentation.
+% \noindent This template works with pdfLaTeX, XeLaTeX and LuaLaTeX. In order to adhere to the EPFL house style, either XeLaTeX or LuaLaTeX is required, as it supports TrueType and OpenType fonts. BibLaTeX is used for the bibliography with as backend biber. Please visit \url{https://batuhanfaik.github.io/report} for the full documentation.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.95\linewidth]{figures/campus.jpg}
-    \caption{EPFL Campus}
-\end{figure}
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.95\linewidth]{figures/campus.jpg}
+%     \caption{EPFL Campus}
+% \end{figure}
 
-\section*{License}
+% \section*{License}
 
-\noindent This template is available under CC BY-NC 4.0. For more information, see \url{https://creativecommons.org/licenses/by-nc/4.0/}. No attribution is required in reports created using this template.
+% \noindent This template is available under CC BY-NC 4.0. For more information, see \url{https://creativecommons.org/licenses/by-nc/4.0/}. No attribution is required in reports created using this template.
