@@ -15,3 +15,5 @@ Tasklets
 mutexes
 Elkan
 Cython
+Calinski-Harabasz
+clusterings

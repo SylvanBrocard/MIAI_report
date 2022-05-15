@@ -1,4 +1,21 @@
 \chapter{Conclusion}
 \label{chapter:conclusion}
 
-\emph{A conclusion...}
+\section{Lessons and future works}
+
+One thing stuck out during the benchmark process of the algorithms: there aren't many datasets big enough to fully take advantage of them. Most datasets upwards of 5 GB are not tabular data, but rather in the form of time series or string, so not suitable for those algorithms. Rather than keeping up a search for a use case, my effort is now going to focus on using job-level parallelism to use the full capacities of the PIM on average-sized datasets. Obvious follow-ups would be:
+\begin{itemize}
+    \item \textbf{K-Means:} Replicate the data on every rank, and run different runs with different random initialization in parallel.
+    \item \textbf{Decision Trees:} Build independent trees on every rank, and create a random forest estimator.
+\end{itemize}
+Such parallelism is supported by the hardware, but will need some serious implementation effort to set the parallelism at the Python level.
+
+We'll also need to up the antes by expanding the comparison benchmarks to other, more performance-oriented libraries, such as XGBoost and Intel DAL.
+
+\section{Personal assessment}
+
+This apprenticeship has been a period of tremendous personal growth, in terms of technical skills and intellectual maturity and ownership of my work. The development of my library was an opportunity to dive deep into the code of Scikit-learn, as well as the SDK. I have learned a lot about software architecture, and how to use it to my advantage. Being in a start-up environment, this was also the occasion to set up my own continuous integration and data management pipelines.
+
+I feel privileged to be standing on the work of current and previous employees at UPMEM. The hardware, the SDK, the network technological stacks, the profiling tools, all feel like a cathedral built by a small team of brilliant individuals, with hidden gems hidden around every corner.
+
+Of course, I cannot forget the excellent classes provided by the Campus Numérique. They expanded my horizons in digital technology and data science, without them, I would still be unaware of the existence of entire fields of knowledge.
